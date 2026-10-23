@@ -166,6 +166,7 @@ $('erase').onclick = async () => {
   if (S.mode === 'box' && !S.box) return error('Draw a box around the object on the video first.');
   const prompt = $('prompt').value.trim();
   if (S.mode === 'ai' && !prompt) return error('Type what should disappear, for example “person”.');
+  if (S.mode === 'ai' && S.sample) return error('The sample clip is a drawing, and the AI detector only recognises real footage. Upload a real video to try AI mode, or use “Draw a box” on the sample.');
   S.busy = true; stop(); $('erase').textContent = 'Erasing…';
   const t0 = performance.now();
   try {
