@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Video Eraser tests</title>
+<style>
+  body { background: #120D17; color: #F4EDE6; font: 14px/1.6 ui-monospace, Consolas, monospace; padding: 24px; }
+  .ok { color: #9DB3A2; } .bad { color: #E08E8A; }
+</style>
+</head>
+<body>
+<h1>AI Video Eraser · tests</h1>
+<pre id="out">running…</pre>
+<script type="module">
+  import './core.test.js';
+  import { run } from './harness.js';
+  const out = document.getElementById('out');
+  out.textContent = '';
+  const result = await run((line, ok) => {
+    const span = document.createElement('span');
+    span.className = ok ? 'ok' : 'bad';
+    span.textContent = line + '\n';
+    out.appendChild(span);
+  });
+  window.__testResult = result;
+</script>
+</body>
+</html>

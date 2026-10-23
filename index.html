@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Video Eraser</title>
+<meta name="description" content="Erase objects from short videos right in your browser: draw a box or type what to remove, and the background is filled in from nearby frames.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Computer vision · runs in your browser</p>
+    <h1>AI Video <em>Eraser</em></h1>
+    <p class="lede">Remove a person, car or anything else from a short video. Draw a box around it or just type what it is. The eraser follows it through every frame and fills the gap with the real background from nearby frames. Your video never leaves this device.</p>
+    <div class="chips"><span>no upload · private</span><span>DETR + SAM</span><span>camera-motion aware</span><span>12.7 → 36.3 dB on the test clip</span></div>
+  </div>
+</header>
+
+<main class="wrap app">
+  <aside class="panel controls" aria-label="Controls">
+    <section class="step">
+      <h2><b>1</b> Choose a video</h2>
+      <div class="row">
+        <button class="btn" id="sample" type="button">Use sample clip</button>
+        <label class="btn" for="file">Upload video</label>
+        <input id="file" type="file" accept="video/*" hidden>
+      </div>
+      <p class="note" id="vidinfo">Up to 8 seconds, resized to 480 px wide. MP4 or WebM work best.</p>
+    </section>
+
+    <section class="step">
+      <h2><b>2</b> Choose what to erase</h2>
+      <div class="seg" role="group" aria-label="Erase mode">
+        <button id="mode-box" type="button" aria-pressed="true">Draw a box</button>
+        <button id="mode-ai" type="button" aria-pressed="false">Describe it (AI)</button>
+      </div>
+      <p class="note" id="boxpanel">Drag on the first frame to draw a box around the object. It's tracked through every frame. Works offline.</p>
+      <div id="aipanel" hidden>
+        <label class="field" for="prompt">What should disappear?
+          <input id="prompt" type="text" value="person" autocomplete="off" placeholder="person, red car, dog">
+        </label>
+        <p class="note">Recognises 80 everyday objects: people, cars, bikes, dogs, bags and more. The first run downloads about 50 MB of AI models, which your browser then caches. Best on a laptop or desktop.</p>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2><b>3</b> Erase</h2>
+      <button class="btn primary big" id="erase" type="button">Erase object</button>
+      <p class="err" id="err" role="alert"></p>
+      <div class="progress" id="prog" hidden><div class="bar"><i id="barfill"></i></div><span class="stage" id="stage"></span></div>
+    </section>
+
+    <section class="step" id="results" hidden>
+      <h2><b>4</b> Result</h2>
+      <div class="stats">
+        <div class="stat"><b id="s-frames">–</b><span>frames processed</span></div>
+        <div class="stat"><b id="s-time">–</b><span>processing time</span></div>
+        <div class="stat"><b id="s-temporal">–</b><span>filled from real footage</span></div>
+        <div class="stat"><b id="s-psnr">–</b><span id="s-psnr-label">quality vs true background</span></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="download" type="button">Download video</button>
+        <button class="btn" id="reset" type="button">Erase something else</button>
+      </div>
+    </section>
+  </aside>
+
+  <section class="panel viewer" aria-label="Viewer">
+    <div class="stagewrap">
+      <canvas id="view" width="16" height="9" aria-label="Video frame"></canvas>
+      <span class="hint" id="hint" hidden></span>
+      <span class="label l" id="lab-before" hidden>Before</span>
+      <span class="label r" id="lab-after" hidden>After</span>
+      <p class="empty" id="empty">Choose the sample clip or upload a short video to begin.</p>
+    </div>
+    <div class="vctl">
+      <button class="btn" id="play" type="button">Play</button>
+      <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Frame">
+      <span class="mono" id="fcount">0 / 0</span>
+    </div>
+    <div class="wipe" id="wiperow" hidden><span>Before</span><input id="wipe" type="range" min="0" max="100" value="50" aria-label="Before and after split"><span>After</span></div>
+    <label class="toggle" for="showmask"><input id="showmask" type="checkbox"> Show what gets erased</label>
+  </section>
+</main>
+
+<section class="wrap how" aria-label="How it works">
+  <div class="grid">
+    <div class="card"><p class="eyebrow">Find it</p><h3>Box tracker or text prompt</h3><p>Draw a box and a centre-weighted correlation tracker, helped by motion cues, follows it. Or type what it is: DETR finds it and SAM cuts an exact mask.</p></div>
+    <div class="card"><p class="eyebrow">Follow the camera</p><h3>Motion estimation</h3><p>The camera's movement is estimated frame to frame, ignoring the object being erased, so pans don't smear the background.</p></div>
+    <div class="card"><p class="eyebrow">Fill the gap</p><h3>Real pixels first</h3><p>Hidden background is copied from nearby frames where it is visible. Anything never seen is reconstructed from its surroundings.</p></div>
+    <div class="card"><p class="eyebrow">Measured</p><h3>Tested against ground truth</h3><p>On a synthetic clip with a known clean background, quality in the erased area goes from 12.7 dB to 36.3 dB PSNR. Tests run in CI.</p></div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>AI Video Eraser · built by Sudha Rani Seeli</span><a href="https://github.com/sudhaseeli/ai-video-eraser" target="_blank" rel="noopener">Code on GitHub ↗</a></div></footer>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
